@@ -2,25 +2,54 @@ package com.conveyal.data.geobuf;
 
 import geobuf.Geobuf;
 import junit.framework.TestCase;
+import org.apache.commons.io.FileUtils;
+import org.geotools.feature.FeatureCollection;
+import org.geotools.feature.FeatureIterator;
 import org.geotools.geojson.feature.FeatureJSON;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.io.WKTReader;
 import org.opengis.feature.simple.SimpleFeature;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+
 
 public class GeometryTest extends TestCase {
     private final GeometryFactory gf = new GeometryFactory();
 
+    public void testFillPoint() {
+        try {
+            String geojson = "C:\\02_doc\\01_北大荒\\03_农机管理系统\\prod_loc.geojson";
+            String pbf = "C:\\02_doc\\01_北大荒\\03_农机管理系统\\prod_loc.bpf";
+            String content = FileUtils.readFileToString(new File(geojson), "utf-8");
+            FeatureJSON featureJSON = new FeatureJSON();
+            FeatureCollection featureCollection = featureJSON.readFeatureCollection(content);
+            /**
+             Encode simplefeature
+             */
+            FeatureIterator featureIterator = featureCollection.features();
+            List<GeobufFeature> geobufEncoders = new LinkedList<>();
+            while (featureIterator.hasNext()) {
+                SimpleFeature simpleFeature = (SimpleFeature) featureIterator.next();
+                GeobufFeature geobufFeature = new GeobufFeature(simpleFeature);
+                geobufEncoders.add(geobufFeature);
+            }
+            FileOutputStream output = new FileOutputStream(pbf);
+            GeobufEncoder encoder = new GeobufEncoder(output, 9);
+            encoder.writeFeatureCollection(geobufEncoders);
+        } catch (Exception e) {
+
+        }
+    }
+
     @Test
-    public void testPoint () throws Exception {
+    public void testPoint() throws Exception {
         String geojson = "{\"type\":\"Feature\",\n" +
                 "    \"properties\":{},\n" +
                 "    \"geometry\":{\n" +
@@ -152,7 +181,7 @@ public class GeometryTest extends TestCase {
         GeobufFeature geobufFeature = new GeobufFeature(simpleFeature);
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         GeobufEncoder encoder = new GeobufEncoder(output, 9);
-        encoder.writeFeatureCollection(List.of(geobufFeature));
+        encoder.writeFeatureCollection(Arrays.asList(geobufFeature));
 
         /**
          Decode geobuf
